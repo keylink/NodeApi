@@ -1,10 +1,12 @@
 const express = require('express');
 const router = express.Router();
-var User = require('../../models/user');
 var passport = require('passport');
-var config = require('../../configs/configs');
-require('../../configs/passport')(passport);
 var jwt = require('jsonwebtoken');
+var User = require('../../models/user');
+var config = require('../../configs/configs');
+
+require('../../configs/passport')(passport);
+
 
 /**
  * User CRUD page
@@ -41,14 +43,15 @@ router.get('/', passport.authenticate('jwt', { session: false}), function (req, 
 
 });
 
-router.get('/me', passport.authenticate('jwt', { session: false}), function (req, res) {
+
+router.get('/me', passport.authenticate('jwt', { session: false }), function (req, res) {
   var user = {};
 
   jwt.verify(req.headers.authorization.slice(4), config.secret, function(err, currentUser) {
     user = currentUser;
   });
 
-  User.findById({_id: user._id}, function (err, user) {
+  User.findById({ _id: user._id }, function (err, user) {
     if (err) {
       return res.json({
         message: "error",
@@ -64,7 +67,8 @@ router.get('/me', passport.authenticate('jwt', { session: false}), function (req
 
 });
 
-router.get('/:id', passport.authenticate('jwt', { session: false}), function (req, res) {
+
+router.get('/:id', passport.authenticate('jwt', { session: false }), function (req, res) {
 
   User.findById({_id: req.params.id}, function (err, user) {
     if (err) {
@@ -83,12 +87,13 @@ router.get('/:id', passport.authenticate('jwt', { session: false}), function (re
 
 });
 
+
 router.post('/search', passport.authenticate('jwt', { session: false}), function (req, res) {
 
   var char = '';
   if(req.body.username) char = req.body.username;
 
-  User.find({username: {$regex: `^${char}` }}).exec(function (err, user) {
+  User.find({username: {$regex: '^' + char }}).exec(function (err, user) {
     if (err) {
       return res.json({
         message: "error",
@@ -105,7 +110,7 @@ router.post('/search', passport.authenticate('jwt', { session: false}), function
 });
 
 
-router.post('/edit', passport.authenticate('jwt', { session: false}), function(req, res) {
+router.put('/:id', passport.authenticate('jwt', { session: false}), function(req, res) {
 
   var user = {};
 
@@ -113,23 +118,22 @@ router.post('/edit', passport.authenticate('jwt', { session: false}), function(r
     user = currentUser;
   });
 
-  User.findOneAndUpdate({_id: user._id}, { $set: {
-
-    displayname: req.body.displayname,
-    address: req.body.address,
-    phone: req.body.phone,
-    age: req.body.age,
-    email: req.body.email
-
-  }}, { new: false }, function (err, user) {
-
+  User.findOneAndUpdate({_id: req.params.id}, {
+    $set: {
+      displayname: req.body.displayname,
+      address: req.body.address,
+      phone: req.body.phone,
+      age: req.body.age,
+      email: req.body.email,
+      updated_date: getDate()
+    }
+  }, { new: false }, function (err, user) {
     if (err) {
       return res.json({
         message: "error",
         error: err
       });
     }
-
   });
 
   return res.json({
@@ -138,22 +142,26 @@ router.post('/edit', passport.authenticate('jwt', { session: false}), function(r
 });
 
 
-// Delete account
 router.delete('/:id', passport.authenticate('jwt', { session: false}), function (req, res) {
 
   User.findByIdAndRemove({_id: req.params.id}, function(err, user) {
-
     if (err) {
       return res.json({
         message: "error",
         error: err
       })
     }
-
     return res.json({message: "user deleted"});
   });
 
 });
 
+
+// Get localTimeZone date
+function getDate() {
+  var currectDate = new Date();
+  var date = new Date(new Date(currectDate).getTime() + 360*60*1000); // 360 - means hours in min
+  return date;
+}
 
 module.exports = router;

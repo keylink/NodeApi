@@ -1,99 +1,98 @@
 const express = require('express');
 const router = express.Router();
 var Product = require('../../models/product');
-var configs = require('../../configs/configs');
 var rimraf = require('rimraf');
+
+//var multer  = require('multer') // for file upload library
+//var upload = multer({ dest: 'uploads/' })
 
 var passport = require('passport');
 require('../../configs/passport')(passport);
 var jwt = require('jsonwebtoken');
 
 /**
- * PRODUCTS CREATIONS PAGES IS HERE
+ * PRODUCTS PAGE
  *
- * 1) created model product
- * 2) getting model from db with method find()
- * 3) posting to db with save()
- * 4) edit and upload image
- * 5) delete product
- * 6) TODO: delete image from folder
- * 7) TODO: convert object in http request format
- * 8) TODO: try decoder
+ * 1) Upload images
  *
  */
 
-
-// Main product route with search and pagination
-
 router.get('/', passport.authenticate('jwt', { session: false}), function (req, res) {
 
-  var limit = configs.limit;
-  var page = req.query.page || 1;
-  var skip = (limit * page) - limit;
-  var query = {};
-  var email = '';
-  var displayName = '';
-  var searchUrl = '';
+  var page = 1;
+  var limit = 20;
 
-  // Checking if there is a params for search
-  if ( req.query.displayName || req.query.email ) {
-    query = { $or: [{ displayName: req.query['displayName'] }, { email: req.query['email'] }] };
-  }
+  if (req.query.page) page = req.query.page;
+  if (req.query.page < 1) page = 1;
+  if (req.query.limit) limit = req.query.limit;
 
-  // Creating new values for pagination url
-  if ( req.query['displayName'] ) displayName = '&displayName=' + req.query['displayName'];
-  if ( req.query['email'] ) email = '&email=' + req.query['email'];
-
-  // Searching in db
-  Product.find(query).skip(skip).limit(limit).exec(function(err, products) {
-    Product.count(query).exec(function(err, count) {
-      if (err) return next(err);
-
-      searchUrl = displayName + email;
-      var totalPages = Math.ceil(count / limit);
-
-      // Sending params to view
-      res.render('product/index', {
-        products: products,
-        currentPage: page,
-        totalPages: totalPages,
-        searchUrl: searchUrl
+  Product.paginate({}, { page: page, limit: limit }, function (err, products) {
+    if (err) {
+      return res.json({
+        message: "error",
+        error: err
       })
+    }
+
+    return res.json({
+      message: "success",
+      users: products.docs,
+      total: products.total,
+      limit: products.limit,
+      page: products.page,
+      pages: products.pages
     })
-  })
+  });
 });
 
 
-// Create Product Page render method
+router.get('/:id', passport.authenticate('jwt', { session: false}), function (req, res) {
 
-router.get('/create', passport.authenticate('jwt', { session: false}), function(req, res) {
-  return res.status(200).render('product/create', { user: req.user })
+  Product.findById({_id: req.params.id}, function (err, products) {
+    if (err) {
+      return res.json({
+        message: "error",
+        error: err
+      })
+    }
+
+    return res.json({
+      message: "success",
+      products: products
+    })
+  });
 });
 
 
-// Create Product method
+router.put('/:id', passport.authenticate('jwt', { session: false}),  function(req, res) {
 
-router.post('/', function(req, res) {
+  // req.on('data', function(data)  {
+  //   console.log(data.toString());
+  // });
 
   var imgLink = '';
-  var product = new Product({
-    email: req.body.email,
-    displayName: req.body.displayName,
-    image: imgLink,
-    productSize: req.body.productSize
-  });
 
-  product.save(req, function (err) {
-    if (err) {
-      return res.status(500).render('product/create', {err: err})
-    } else {
-      return res.status(200).redirect('/products');
+  Product.findOneAndUpdate({_id: req.params.id}, {
+    $set: {
+      email: req.body.email,
+      displayName: req.body.displayName,
+      image: imgLink,
+      productSize: req.body.productSize
     }
+  }, { new: false }, function (err, user) {
+    if (err) {
+      return res.json({
+        message: "error",
+        error: err
+      });
+    }
+
+    return res.json({
+      message: "edited successfully"
+    })
   });
 });
 
-
-// Delete product
 
 router.delete('/:id', passport.authenticate('jwt', { session: false}), function (req, res) {
   Product.findByIdAndRemove(req.params.id, function(err, product) {
@@ -104,35 +103,32 @@ router.delete('/:id', passport.authenticate('jwt', { session: false}), function 
     // Creating path to delete image folder with image both
     if(product.image) rimraf("./public/" + product.imageFolderName, function() { console.log('image delete'); });
   });
-  return res.end('{"success" : "Updated Successfully", "status" : 200}');
-});
-
-
-// Edit product
-router.get('/edit', passport.authenticate('jwt', { session: false}), function (req, res) {
-  return res.status(200).render('product/edit', { user: req.user })
-});
-
-
-// Search by email route
-
-router.get('/search', passport.authenticate('jwt', { session: false}), function (req, res) {
-  Product.find().sort({ email: req.query.email }).exec(function(err, model) {
-    res.send(model)
+  return res.json({
+    success : "Deleted Successfully",
+    status : 200
   });
 });
 
-getToken = function (headers) {
-  if (headers && headers.authorization) {
-    var parted = headers.authorization.split(' ');
-    if (parted.length === 2) {
-      return parted[1];
-    } else {
-      return null;
+
+router.post('/search', passport.authenticate('jwt', { session: false}), function (req, res) {
+
+  var char = '';
+  if(req.body.email) char = req.body.email;
+
+  Product.find({email: {$regex: '^' + char }}).exec(function (err, product) {
+    if (err) {
+      return res.json({
+        message: "error",
+        error: err
+      })
     }
-  } else {
-    return null;
-  }
-};
+
+    return res.json({
+      message: "success",
+      user: product
+    })
+  });
+
+});
 
 module.exports = router;

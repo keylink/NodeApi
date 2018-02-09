@@ -5,7 +5,6 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 var bcrypt = require('bcrypt-nodejs');
-var Account = require('./account');
 var validate = require('mongoose-validate');
 var mongoosePaginate = require('mongoose-paginate');
 
@@ -28,23 +27,25 @@ var UserSchema = new Schema({
       validate.email, 'invalid email address'
     ]
   },
-  address: String,
   phone: String,
   age: String,
   surname: String,
+  address: {
+    street: String
+  },
   created_date: {
     type: Date,
-    default: Date.now
+    default: getDate()
   },
   updated_date: {
     type: Date,
-    default: Date.now
+    default: getDate()
   }
 });
 
+
 UserSchema.pre('save', function (next) {
   var user = this;
-  user.updated_date = Date.now;
 
   if (this.isModified('password') || this.isNew) {
     bcrypt.genSalt(10, function (err, salt) {
@@ -64,24 +65,6 @@ UserSchema.pre('save', function (next) {
   }
 });
 
-UserSchema.post('save', function(next) {
-  // 'this' is the client being removed. Provide callbacks here if you want
-  // to be notified of the calls' result.
-  //Vouchers.remove({user_id: this._id}).exec();
-  console.log("shema", this)
-  var profile = new Account({
-    user_id: this._id,
-    displayname: this.username
-  });
-
-  profile.save(function(err) {
-    if (err) {
-      return err;
-    }
-    console.log("post test", profile);
-  });
-
-});
 
 UserSchema.methods.comparePassword = function (passw, cb) {
   bcrypt.compare(passw, this.password, function (err, isMatch) {
@@ -92,6 +75,13 @@ UserSchema.methods.comparePassword = function (passw, cb) {
     cb(null, isMatch);
   });
 };
+
+
+function getDate() {
+  var currentDate = new Date();
+  var date = new Date(new Date(currentDate).getTime() + 360*60*1000);
+  return date;
+}
 
 UserSchema.plugin(mongoosePaginate);
 
