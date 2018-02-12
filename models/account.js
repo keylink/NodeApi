@@ -6,9 +6,6 @@ var Profile = require('./profile');
 var Account = new Schema({
   displayname: String,
   user_id: String,
-  account_created: {
-    Date
-  },
   email: String,
   address: String,
   phone: String,

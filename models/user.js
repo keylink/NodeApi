@@ -79,8 +79,7 @@ UserSchema.methods.comparePassword = function (passw, cb) {
 
 function getDate() {
   var currentDate = new Date();
-  var date = new Date(new Date(currentDate).getTime() + 360*60*1000);
-  return date;
+  return new Date(new Date(currentDate).getTime() + 360*60*1000);
 }
 
 UserSchema.plugin(mongoosePaginate);

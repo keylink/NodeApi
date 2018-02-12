@@ -9,20 +9,20 @@ Content-type: application/json
 Authorization: JWT token
 ```
 
+|Request| Type | Url |
+|------| ------ | ------ |
+| Register | POST | http://{address}/register] |
+| Login | POST | http://{address}/login] |
+| Users | GET | http://{address}/users] |
+| User | GET | http://{address}/users/:id |
+| Edit | PUT | http://{address}/users/:id |
+| Delete | DELETE | http://{address}/users/:id |
+
 ###### Response Body
 
 ```
 {
   message: "Success",
-  token: JWT token
+  data: data
 }
 ```
-
-|Request| Type | Url |
-|------| ------ | ------ |
-| Register | POST | [http://{address}/register] [PlDb] |
-| Login | POST | [http://{address}/login] [PlGh] |
-| Users | GET | [http://{address}/users] [PlGd] |
-| User | GET | [http://{address}/users/:id] [PlOd] |
-| Edit | PUT | [http://{address}/users/:id] [PlMe] |
-| Delete | DELETE | [http://{address}/users/:id] [PlGa] |

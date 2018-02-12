@@ -1,14 +1,14 @@
 const express = require('express');
 const router = express.Router();
 var Product = require('../../models/product');
-var rimraf = require('rimraf');
+    rimraf = require('rimraf');
+    passport = require('passport');
+    jwt = require('jsonwebtoken');
+
+require('../../configs/passport')(passport);
 
 //var multer  = require('multer') // for file upload library
 //var upload = multer({ dest: 'uploads/' })
-
-var passport = require('passport');
-require('../../configs/passport')(passport);
-var jwt = require('jsonwebtoken');
 
 /**
  * PRODUCTS PAGE

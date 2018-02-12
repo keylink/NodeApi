@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
 var passport = require('passport');
-var jwt = require('jsonwebtoken');
-var User = require('../../models/user');
-var config = require('../../configs/configs');
+    jwt = require('jsonwebtoken');
+    User = require('../../models/user');
+    config = require('../../configs/configs');
 
 require('../../configs/passport')(passport);
 
@@ -17,7 +17,7 @@ require('../../configs/passport')(passport);
 router.get('/', passport.authenticate('jwt', { session: false}), function (req, res) {
 
   var page = 1;
-  var limit = 20;
+      limit = 20;
 
   if (req.query.page) page = req.query.page;
   if (req.query.page < 1) page = 1;
@@ -160,8 +160,8 @@ router.delete('/:id', passport.authenticate('jwt', { session: false}), function 
 // Get localTimeZone date
 function getDate() {
   var currectDate = new Date();
-  var date = new Date(new Date(currectDate).getTime() + 360*60*1000); // 360 - means hours in min
-  return date;
+
+  return new Date(new Date(currectDate).getTime() + 360*60*1000); // 360 - means hours in min
 }
 
 module.exports = router;
